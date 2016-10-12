@@ -1,0 +1,230 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description":"WebPA Server for mapping between names of devices.",
+    "version": "1.0.0",
+    "title": "Mnemosyne"
+  },
+  "host": "9yui64kvxi.execute-api.us-east-1.amazonaws.com",
+  "basePath": "/cd/test-post-lambda",
+  "schemes": [
+    "https"
+  ],
+  "tags": [
+    {
+      "name": "mnemosyne",
+      "description": "Everything about mnemosyne"
+    }
+  ],
+  "paths": {
+    "/": {
+      "post": {
+        "tags": [
+          "mnemosyne"
+        ],
+        "summary": "Add device data",
+        "description": "This method is used to add device data such as device_id and serial_number to dynamodb.",
+        "operationId": "addMACData",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "X-Webpa-Signature",
+            "in": "header",
+            "description" : "Webpa signature for authentication",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "Device",
+            "required": true,
+            "description" : "Device details",
+            "schema": {
+              "$ref": "#/definitions/Device"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/Empty"
+            },
+            "headers": {
+              "Access-Control-Allow-Origin": {
+                "type": "string"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Authentication Error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseParameters": {
+                "method.response.header.Access-Control-Allow-Origin": "'*'"
+              }
+            }
+          },
+          "requestTemplates": {
+            "application/json": "{\n    \"body\" : $input.json('$'),\n    \"signature\": \"$input.params().header.get(\"x-webpa-signature\")\"\n}"
+          },
+          "uri": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:801199994599:function:addMACData/invocations",
+          "passthroughBehavior": "when_no_templates",
+          "httpMethod": "POST",
+          "type": "aws"
+        }
+      }
+    },
+    "/{device_id}": {
+      "get": {
+        "tags": [
+          "mnemosyne"
+        ],
+        "summary": "Get MAC UUID",
+        "description": "This method is used to get MAC_UUID from dynamodb. device_id can be either macId or serialNumber. This can be differentiated by using mac: and serial:",
+        "operationId": "getMACUuid",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "description" : "macId or serialNumber",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description" : "Authorization key",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "schema": {
+              "$ref": "#/definitions/Response"
+            },
+            "headers": {
+              "Access-Control-Allow-Origin": {
+                "type": "string"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Authentication Error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "520": {
+            "description": "Unknown Error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseParameters": {
+                "method.response.header.Access-Control-Allow-Methods": "'GET,OPTIONS'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'"
+              }
+            }
+          },
+          "requestTemplates": {
+            "application/json": "{\n\"device_id\" : \"mac:$input.params('device_id')\",\n\"authorization\": \"$input.params().header.get(\"Authorization\")\"\n}"
+          },
+          "uri": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:801199994599:function:getMACUuid/invocations",
+          "passthroughBehavior": "when_no_templates",
+          "httpMethod": "POST",
+          "type": "aws"
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Response": {
+      "type": "object",
+      "properties": {
+        "MAC_UUID": {
+          "type": "string"
+        }
+      },
+      "title": "Response"
+    },
+    "Empty": {
+      "type": "object",
+      "title": "Empty Schema"
+    },
+    "Device": {
+      "type": "object",
+      "properties": {
+        "device_id": {
+          "type": "string"
+        },
+        "serial_number": {
+          "type": "string"
+        }
+      },
+      "title": "Device"
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "title": "Error"
+    }
+  }
+}
